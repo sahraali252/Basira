@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "BASIRA Privacy Shield",
+  "version": "0.1.0",
+  "description": "A local-first MVP that surfaces third-party requests and blocks a small tracker list.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "webRequest",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "BASIRA Privacy Shield",
+    "default_popup": "popup.html"
+  }
+}

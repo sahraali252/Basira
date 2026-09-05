@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BASIRA</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main>
+      <header><h1>BASIRA</h1><span id="shield-status">Shield OFF</span></header>
+      <label class="switch-row" for="shield-toggle">
+        <span>Privacy Shield</span>
+        <input id="shield-toggle" type="checkbox">
+      </label>
+      <section class="counts" aria-label="Event counts">
+        <div><strong id="detected-count">0</strong><span>detected</span></div>
+        <div><strong id="blocked-count">0</strong><span>blocked</span></div>
+      </section>
+      <div class="events-heading"><h2>Recent events</h2><button id="clear-events" type="button">Clear</button></div>
+      <ul id="event-list"><li class="empty">No third-party requests detected yet.</li></ul>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
