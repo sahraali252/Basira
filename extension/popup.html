@@ -19,7 +19,13 @@
       </section>
       <div class="events-heading"><h2>Recent events</h2><button id="clear-events" type="button">Clear</button></div>
       <ul id="event-list"><li class="empty">No third-party requests detected yet.</li></ul>
+      <details id="cookie-insights">
+        <summary>Cookie Insights <span id="cookie-count" role="status">Loading...</span></summary>
+        <p class="cookie-scope">Unpartitioned cookies matching this page URL. Embedded services may use other cookies.</p>
+        <ul id="cookie-list" aria-label="Cookie metadata"></ul>
+      </details>
     </main>
     <script src="popup.js"></script>
+    <script src="cookie-insights.js"></script>
   </body>
 </html>
