@@ -11,11 +11,6 @@
     "declarativeNetRequestFeedback"
   ],
   "host_permissions": ["<all_urls>"],
-  "optional_permissions": ["cookies"],
-  "options_ui": {
-    "page": "options.html",
-    "open_in_tab": true
-  },
   "background": {
     "service_worker": "background.js"
   },
