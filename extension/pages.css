@@ -1,0 +1,26 @@
+.settings-page { width: auto; max-width: none; min-height: 100vh; background: #f4f5f2; }
+.settings-page main { width: min(620px, calc(100% - 40px)); margin: 35px auto; padding: 25px 28px 0; border: 0; box-shadow: none; background: transparent; }
+.settings-page header > span { font-size: 13px; color: #68736c; }
+.settings-page section { padding: 22px 0; border-bottom: 1px solid #dce1da; }
+.settings-page h2 { font-size: 14px; }
+.help { font-size: 12px; color: #677369; line-height: 1.7; margin: 10px 0; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; font-size: 13px; }
+.setting-row input { appearance: none; width: 36px; height: 22px; border-radius: 20px; padding: 3px; background: #b4bdb4; cursor: pointer; flex-shrink: 0; margin: 0; }
+.setting-row input::before { content: ""; display: block; width: 16px; height: 16px; border-radius: 50%; background: white; box-shadow: 0 1px 3px #0002; transition: transform .15s; }
+.setting-row input:checked { background: #609774; }
+.setting-row input:checked::before { transform: translateX(14px); }
+.setting-row input:focus-visible { outline: 2px solid #43765b; outline-offset: 4px; }
+.settings-page ul { max-height: none; margin: 10px 0 0; }
+#paused-sites li { display: flex; justify-content: space-between; align-items: center; gap: 15px; font-size: 13px; }
+#paused-sites span { overflow-wrap: anywhere; min-width: 0; }
+.settings-page button { border: 1px solid #ccd6ca; border-radius: 5px; padding: 7px 10px; background: #ffffff80; font-size: 12px; }
+.settings-page button:disabled { opacity: .5; cursor: default; }
+.form-row { display: flex; gap: 10px; margin-top: 10px; }
+form label { font-size: 12px; }
+input[type="url"] { flex: 1; min-width: 0; border: 1px solid #ccd6ca; border-radius: 5px; padding: 9px; background: #ffffff80; font: inherit; font-size: 12px; }
+.cookie-domain { font-size: 13px; overflow-wrap: anywhere; margin: 7px 0; }
+dl { display: grid; grid-template-columns: 100px 1fr; gap: 8px 18px; font-size: 12px; }
+dt { color: #71816f; } dd { margin: 0; overflow-wrap: anywhere; }
+#cookies h2 { overflow-wrap: anywhere; }
+@media(max-width:480px) { .settings-page main { width: calc(100% - 24px); margin: 20px auto; padding: 15px 8px 0; } }
+@media(forced-colors:active) { .setting-row input { appearance: auto; } .setting-row input::before { display: none; } }

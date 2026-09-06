@@ -1,25 +1,25 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>BASIRA</title>
-    <link rel="stylesheet" href="popup.css">
-  </head>
-  <body>
-    <main>
-      <header><h1>BASIRA</h1><span id="shield-status">Shield OFF</span></header>
-      <label class="switch-row" for="shield-toggle">
-        <span>Privacy Shield</span>
-        <input id="shield-toggle" type="checkbox">
-      </label>
-      <section class="counts" aria-label="Event counts">
-        <div><strong id="detected-count">0</strong><span>detected</span></div>
-        <div><strong id="blocked-count">0</strong><span>blocked</span></div>
-      </section>
-      <div class="events-heading"><h2>Recent events</h2><button id="clear-events" type="button">Clear</button></div>
-      <ul id="event-list"><li class="empty">No third-party requests detected yet.</li></ul>
-    </main>
-    <script src="popup.js"></script>
-  </body>
-</html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BASIRA</title><link rel="stylesheet" href="popup.css"></head>
+<body>
+<main>
+  <header><h1>BASIRA</h1><div class="header-controls"><span id="shield-status" role="status">Loading</span><button id="menu-toggle" aria-label="More BASIRA actions" aria-haspopup="menu" aria-expanded="false" aria-controls="action-menu">⋯</button></div>
+    <div id="action-menu" role="menu" aria-label="BASIRA actions" hidden>
+      <button role="menuitem" data-action="mirror">Open Digital Mirror</button>
+      <button role="menuitem" data-action="pause" id="menu-pause" disabled>Pause on this site</button>
+      <button role="menuitem" data-action="settings">Settings</button>
+      <button role="menuitem" data-action="clear">Clear activity</button>
+    </div>
+  </header>
+  <p id="notice" role="alert" hidden></p>
+  <label class="switch-row" for="shield-toggle"><span class="shield-title">Privacy Shield</span><input id="shield-toggle" type="checkbox" role="switch" disabled><span class="switch-track" aria-hidden="true"><span></span></span></label>
+  <p class="shield-note">Detection continues when blocking is off or paused.</p>
+  <section class="counts" aria-label="Saved request counts"><div><strong id="detected-count">0</strong><span>requests detected</span></div><div><strong id="blocked-count">0</strong><span>requests blocked</span></div></section>
+  <div class="events-heading"><div><h2>Recent activity</h2><p id="activity-caption">Latest 30 saved requests · All sites</p></div><button id="clear-events" type="button" title="Clear all stored privacy events">Clear</button></div>
+  <ul id="event-list" aria-label="Recent privacy events"><li class="empty">Loading activity…</li></ul>
+  <section class="site-control" aria-label="Current site protection"><p id="site-status">Checking current site…</p><strong id="site-host"></strong><button id="pause-site" disabled>Pause on this site</button><small id="site-note">Pause/resume reloads open tabs on this exact hostname.</small></section>
+  <section class="cookie-row"><div><h2>Cookies</h2><p id="cookie-summary">Optional inspection</p></div><button id="open-cookies" disabled>View insights →</button></section>
+  <footer>Activity and preferences stay in this browser.</footer>
+</main>
+<script src="shared.js"></script><script src="ui.js"></script><script src="popup.js"></script>
+</body></html>

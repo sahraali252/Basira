@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BASIRA Settings</title><link rel="stylesheet" href="popup.css"><link rel="stylesheet" href="pages.css"></head>
+<body class="settings-page"><main>
+<header><h1>BASIRA</h1><span>Settings</span></header>
+<p id="notice" role="alert" hidden></p>
+<section><h2>General</h2><label class="setting-row">Privacy Shield<input type="checkbox" role="switch" id="global-shield"></label><p class="help">Detection continues when Shield is off. Blocking uses the small BASIRA rule list.</p></section>
+<section><h2>Tracker protection</h2><div id="categories"></div><p class="help">These switches control real rules. Identifiers is omitted because the current rule list has no Identifier entries. Category changes affect future requests.</p></section>
+<section><h2>Detection display</h2><label class="setting-row">Show low-risk activity<input type="checkbox" role="switch" id="show-low"></label><p class="help">Filters the popup list only. Detection, saved events, and counts are unchanged.</p></section>
+<section><h2>Site permissions</h2><p class="help">Pauses apply to exact hostnames. Resume reloads open tabs on that hostname; other sites and global Shield are unchanged.</p><ul id="paused-sites"></ul></section>
+<section id="dashboard"><h2>Digital Mirror</h2><p class="help">Set the URL of your BASIRA dashboard. No production address is configured by default. Opening it does not automatically share extension data.</p><form id="dashboard-form"><label for="dashboard-url">Dashboard URL</label><div class="form-row"><input id="dashboard-url" type="url" placeholder="https://your-dashboard.example" autocomplete="off"><button type="submit">Save</button></div></form></section>
+<section><h2>Data</h2><button id="clear-data">Clear stored privacy activity</button><p class="help">Deletes recorded requests. Keeps protection preferences and does not delete browser cookies.</p><button id="revoke-cookies">Turn off Cookie Insights permission</button></section>
+<footer>Preferences are stored locally.</footer>
+</main><script src="ui.js"></script><script src="options.js"></script></body></html>

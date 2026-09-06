@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BASIRA Cookie Insights</title><link rel="stylesheet" href="popup.css"><link rel="stylesheet" href="pages.css"></head>
+<body class="settings-page"><main>
+<header><h1>BASIRA</h1><span>Cookie Insights</span></header>
+<p id="notice" role="alert" hidden></p>
+<section><h2 id="cookie-host">Current website</h2><p class="help">Stored cookies for this hostname and domains in its retained request history. Presence does not prove a cookie was sent, accepted through a banner, or used to track you.</p><p class="help">This MVP shows unpartitioned cookies only. First/third-party uses BASIRA's approximate site-domain comparison. Cookie values are never displayed or saved.</p>
+<div class="form-row"><button id="grant-cookies">Enable Cookie Insights</button><button id="refresh-cookies">Refresh</button></div><p id="cookie-count" class="help"></p></section>
+<div id="cookies"></div>
+<footer>Read-only metadata · No banner automation · No cookie deletion</footer>
+</main><script src="ui.js"></script><script src="cookies.js"></script></body></html>

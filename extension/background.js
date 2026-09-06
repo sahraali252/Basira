@@ -1,5 +1,57 @@
 /* global BASIRA, TRACKERS, findTracker */
-importScripts("shared.js", "tracker-rules.js");
+// Register the response channel before any imported/optional code can throw.
+const BACKGROUND_DEBUG = false; // Enable locally to trace worker wakes/messages.
+let startupError = null;
+if (BACKGROUND_DEBUG) console.info("[BASIRA BG] service worker started", Date.now());
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (BACKGROUND_DEBUG) console.debug("[BASIRA BG] message", message?.type);
+  if (startupError) {
+    sendResponse({ ok: false, error: "Background startup failed: " + startupError.message });
+    return false;
+  }
+  const extendedActions = {
+    BASIRA_GET_STATE: async () => {
+      const data = await chrome.storage.local.get({ [BASIRA.EVENTS_KEY]: [] });
+      return { events: Array.isArray(data[BASIRA.EVENTS_KEY]) ? data[BASIRA.EVENTS_KEY] : [], preferences: await readPreferences(), categories: SUPPORTED_CATEGORIES };
+    },
+    BASIRA_UPDATE_SETTINGS: () => updatePreferences(message.patch || {}).then(preferences => ({ preferences })),
+    BASIRA_SET_SITE_PAUSE: () => setSitePause(message.hostname, Boolean(message.paused)),
+    BASIRA_OPEN_MIRROR: () => openDigitalMirror(),
+    BASIRA_GET_COOKIES: () => getCookieInsights(message.tabId)
+  };
+  if (Object.hasOwn(extendedActions, message?.type)) {
+    Promise.resolve().then(extendedActions[message.type])
+      .then(result => sendResponse({ ok: true, ...result }))
+      .catch(error => { console.error("[BASIRA BG] request failed", message.type, error); sendResponse({ ok: false, error: error.message }); });
+    return true;
+  }
+  if (message?.type === "BASIRA_GET_EVENTS") {
+    chrome.storage.local.get({ [BASIRA.EVENTS_KEY]: [], [BASIRA.SHIELD_KEY]: false })
+      .then((data) => sendResponse({ events: data[BASIRA.EVENTS_KEY], shieldEnabled: data[BASIRA.SHIELD_KEY] }))
+      .catch(error => { console.error("[BASIRA BG] GET_EVENTS failed", error); sendResponse({ ok: false, error: error.message }); });
+    return true;
+  }
+  if (message?.type === "BASIRA_SET_SHIELD") {
+    applyShield(Boolean(message.enabled))
+      .then(() => sendResponse({ ok: true, shieldEnabled: Boolean(message.enabled) }))
+      .catch((error) => sendResponse({ ok: false, error: error.message }));
+    return true;
+  }
+  if (message?.type === "BASIRA_CLEAR_EVENTS") {
+    storageQueue = storageQueue.catch(() => {}).then(() => chrome.storage.local.set({ [BASIRA.EVENTS_KEY]: [] }));
+    storageQueue
+      .then(() => sendResponse({ ok: true }))
+      .catch(error => { console.error("[BASIRA BG] Clear failed", error); sendResponse({ ok: false, error: error.message }); });
+    return true;
+  }
+});
+
+try {
+  importScripts("shared.js", "tracker-rules.js", "config.js", "preferences.js", "insights.js");
+} catch (error) {
+  startupError = error;
+  console.error("[BASIRA BG] script initialization failed", error);
+}
 
 // Service workers are short-lived, so this cache is only a convenience. The
 // stored event remains the source of truth and is safe if Chrome restarts us.
@@ -65,7 +117,7 @@ async function markEventBlocked(eventId) {
   return storageQueue;
 }
 
-function dynamicRules() {
+function dynamicRules(preferences) {
   // Restrict blocks to typical third-party subresources. This avoids blocking
   // a top-level visit should a domain ever be opened directly.
   const resourceTypes = ["script", "image", "xmlhttprequest", "ping", "sub_frame", "stylesheet", "font", "media", "other"];
@@ -80,28 +132,29 @@ function dynamicRules() {
       domainType: "thirdParty",
       resourceTypes
     }
-  }));
+  })).filter((rule, index) => preferences.categories[TRACKERS[index].category] !== false);
 }
 
 async function applyShield(enabled) {
-  const oldRuleIds = TRACKERS.map((_, index) => DNR_RULE_ID_START + index);
-  await chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: oldRuleIds,
-    addRules: enabled ? dynamicRules() : []
-  });
-  await chrome.storage.local.set({ [BASIRA.SHIELD_KEY]: enabled });
+  await updatePreferences({ shieldEnabled: enabled });
 }
 
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(() => {
+  return initializeStorage().catch(error => console.error("[BASIRA BG] installation initialization failed", error));
+});
+
+async function initializeStorage() {
+  if (startupError) throw startupError;
   const stored = await chrome.storage.local.get({ [BASIRA.EVENTS_KEY]: [], [BASIRA.SHIELD_KEY]: false });
   await chrome.storage.local.set({
     [BASIRA.EVENTS_KEY]: Array.isArray(stored[BASIRA.EVENTS_KEY]) ? stored[BASIRA.EVENTS_KEY] : [],
     [BASIRA.SHIELD_KEY]: Boolean(stored[BASIRA.SHIELD_KEY])
   });
   await applyShield(Boolean(stored[BASIRA.SHIELD_KEY]));
-});
+}
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (startupError) return;
   if (changeInfo.url) {
     const host = BASIRA.hostnameFromUrl(changeInfo.url);
     if (host) {
@@ -118,6 +171,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // Observation-only webRequest listener: MV3 blocking is handled exclusively
 // by declarativeNetRequest, never by the deprecated blocking webRequest flow.
 chrome.webRequest.onBeforeRequest.addListener((details) => {
+  if (startupError) return;
   if (details.tabId < 0 || details.type === "main_frame") return;
   const event = buildEvent(details, false);
   if (!event) return;
@@ -127,7 +181,10 @@ chrome.webRequest.onBeforeRequest.addListener((details) => {
 
 // This feedback event confirms that Chrome's declarative rule matched. It is
 // the preferred source for `blocked: true`; error handling below is a fallback.
-chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
+function onRuleMatched(info) {
+  if (startupError) return;
+  // Pause allow rules are not blocked requests.
+  if (info.rule.ruleId < DNR_RULE_ID_START || info.rule.ruleId >= DNR_RULE_ID_START + TRACKERS.length) return;
   const requestId = info.request.requestId;
   const existingEventId = eventIdByRequestId.get(requestId);
   if (existingEventId) {
@@ -140,30 +197,17 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
     tabId: info.request.tabId
   }, true);
   if (event) saveEvent(event).catch(console.warn);
-});
+}
+
+// This development-only API can be absent; observation/error listeners still work.
+try {
+  chrome.declarativeNetRequest.onRuleMatchedDebug?.addListener(onRuleMatched);
+} catch (error) {
+  console.warn("[BASIRA BG] debug feedback unavailable", error);
+}
 
 chrome.webRequest.onErrorOccurred.addListener((details) => {
   if (details.error === "net::ERR_BLOCKED_BY_CLIENT") {
     markEventBlocked(eventIdByRequestId.get(details.requestId)).catch(console.warn);
   }
 }, { urls: ["<all_urls>"] });
-
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type === "BASIRA_GET_EVENTS") {
-    chrome.storage.local.get({ [BASIRA.EVENTS_KEY]: [], [BASIRA.SHIELD_KEY]: false })
-      .then((data) => sendResponse({ events: data[BASIRA.EVENTS_KEY], shieldEnabled: data[BASIRA.SHIELD_KEY] }));
-    return true;
-  }
-  if (message?.type === "BASIRA_SET_SHIELD") {
-    applyShield(Boolean(message.enabled))
-      .then(() => sendResponse({ ok: true, shieldEnabled: Boolean(message.enabled) }))
-      .catch((error) => sendResponse({ ok: false, error: error.message }));
-    return true;
-  }
-  if (message?.type === "BASIRA_CLEAR_EVENTS") {
-    storageQueue = storageQueue.then(() => chrome.storage.local.set({ [BASIRA.EVENTS_KEY]: [] }));
-    storageQueue
-      .then(() => sendResponse({ ok: true }));
-    return true;
-  }
-});
